@@ -221,6 +221,13 @@ func (cl *ClientlogService) processEvent(event events.Event) {
 		defer span.End()
 
 		evType, users, data = backchannelLogoutEvent(e)
+
+	case events.OCMCoreShareCreated:
+		_, span := cl.tp.Tracer("clientlog").Start(ctx, "processEvent OCMCoreShareCreated")
+		defer span.End()
+
+		// TODO: implement the OCMCoreShareCreated event
+		evType = "ocm-share-created"
 	}
 
 	if err != nil {
