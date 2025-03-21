@@ -108,6 +108,9 @@ func (ul *UserlogService) MemorizeEvents(ch <-chan events.Event) {
 }
 
 func (ul *UserlogService) processEvent(event events.Event) {
+
+	fmt.Printf("###\n\n userlog processEvent: event type: %T \n\n ###\n", event.Event)
+
 	// for each event we need to:
 	// I) find users eligible to receive the event
 	var (
@@ -128,6 +131,9 @@ func (ul *UserlogService) processEvent(event events.Event) {
 		return
 	}
 
+	ctx, span := ul.tp.Tracer("userlog").Start(ctx, "processEvent")
+	defer span.End()
+
 	gwc, err = ul.gatewaySelector.Next()
 	if err != nil {
 		ul.log.Error().Err(err).Msg("cannot get gateway client")
@@ -135,9 +141,15 @@ func (ul *UserlogService) processEvent(event events.Event) {
 	}
 	switch e := event.Event.(type) {
 	default:
+		_, span := ul.tp.Tracer("userlog").Start(ctx, "processEvent unknown")
+		defer span.End()
+
 		err = errors.New("unhandled event")
 	// file related
 	case events.PostprocessingStepFinished:
+		_, span := ul.tp.Tracer("userlog").Start(ctx, "processEvent PostprocessingStepFinished")
+		defer span.End()
+
 		switch e.FinishedStep {
 		case events.PPStepAntivirus:
 			result := e.Result.(events.VirusscanResult)
@@ -158,30 +170,54 @@ func (ul *UserlogService) processEvent(event events.Event) {
 
 	// space related // TODO: how to find spaceadmins?
 	case events.SpaceDisabled:
+		ctx, span := ul.tp.Tracer("userlog").Start(ctx, "processEvent SpaceDisabled")
+		defer span.End()
+
 		executant = e.Executant
 		users, err = utils.GetSpaceMembers(ctx, e.ID.GetOpaqueId(), gwc, utils.ViewerRole)
 	case events.SpaceDeleted:
+		_, span := ul.tp.Tracer("userlog").Start(ctx, "processEvent SpaceDeleted")
+		defer span.End()
+
 		executant = e.Executant
 		for u := range e.FinalMembers {
 			users = append(users, u)
 		}
 	case events.SpaceShared:
+		ctx, span := ul.tp.Tracer("userlog").Start(ctx, "processEvent SpaceShared")
+		defer span.End()
+
 		executant = e.Executant
 		users, err = utils.ResolveID(ctx, e.GranteeUserID, e.GranteeGroupID, gwc)
 	case events.SpaceUnshared:
+		ctx, span := ul.tp.Tracer("userlog").Start(ctx, "processEvent SpaceUnshared")
+		defer span.End()
+
 		executant = e.Executant
 		users, err = utils.ResolveID(ctx, e.GranteeUserID, e.GranteeGroupID, gwc)
 	case events.SpaceMembershipExpired:
+		ctx, span := ul.tp.Tracer("userlog").Start(ctx, "processEvent SpaceMembershipExpired")
+		defer span.End()
+
 		users, err = utils.ResolveID(ctx, e.GranteeUserID, e.GranteeGroupID, gwc)
 
 	// share related
 	case events.ShareCreated:
+		ctx, span := ul.tp.Tracer("userlog").Start(ctx, "processEvent ShareCreated")
+		defer span.End()
+
 		executant = e.Executant
 		users, err = utils.ResolveID(ctx, e.GranteeUserID, e.GranteeGroupID, gwc)
 	case events.ShareRemoved:
+		ctx, span := ul.tp.Tracer("userlog").Start(ctx, "processEvent ShareRemoved")
+		defer span.End()
+
 		executant = e.Executant
 		users, err = utils.ResolveID(ctx, e.GranteeUserID, e.GranteeGroupID, gwc)
 	case events.ShareExpired:
+		ctx, span := ul.tp.Tracer("userlog").Start(ctx, "processEvent ShareExpired")
+		defer span.End()
+
 		users, err = utils.ResolveID(ctx, e.GranteeUserID, e.GranteeGroupID, gwc)
 	}
 

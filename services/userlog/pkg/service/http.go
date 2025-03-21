@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/owncloud/ocis/v2/ocis-pkg/roles"
@@ -25,6 +26,9 @@ func (ul *UserlogService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // HandleGetEvents is the GET handler for events
 func (ul *UserlogService) HandleGetEvents(w http.ResponseWriter, r *http.Request) {
+
+	fmt.Println("###\n\n userlog HandleGetEvents \n\n ###")
+
 	ctx, span := ul.tracer.Start(r.Context(), "HandleGetEvents")
 	defer span.End()
 	u, ok := revactx.ContextGetUser(ctx)

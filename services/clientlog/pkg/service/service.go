@@ -93,6 +93,9 @@ func (cl *ClientlogService) processEvent(event events.Event) {
 		return
 	}
 
+	ctx, span := cl.tp.Tracer("clientlog").Start(ctx, "processEvent")
+	defer span.End()
+
 	var (
 		users  []string
 		evType string
@@ -111,21 +114,39 @@ func (cl *ClientlogService) processEvent(event events.Event) {
 
 	switch e := event.Event.(type) {
 	default:
+		_, span := cl.tp.Tracer("clientlog").Start(ctx, "processEvent unknown")
+		defer span.End()
+
 		err = errors.New("unhandled event")
 	case events.UploadReady:
+		_, span := cl.tp.Tracer("clientlog").Start(ctx, "processEvent UploadReady")
+		defer span.End()
+
 		if e.Failed {
 			// we don't inform about failed uploads yet
 			return
 		}
 		fileEv("postprocessing-finished", e.FileRef)
 	case events.ItemTrashed:
+		_, span := cl.tp.Tracer("clientlog").Start(ctx, "processEvent ItemTrashed")
+		defer span.End()
+
 		evType = "item-trashed"
 		users, data, err = processItemTrashedEvent(ctx, e.Ref, gwc, event.InitiatorID, e.ID)
 	case events.ItemRestored:
+		_, span := cl.tp.Tracer("clientlog").Start(ctx, "processEvent ItemRestored")
+		defer span.End()
+
 		fileEv("item-restored", e.Ref)
 	case events.ContainerCreated:
+		_, span := cl.tp.Tracer("clientlog").Start(ctx, "processEvent ContainerCreated")
+		defer span.End()
+
 		fileEv("folder-created", e.Ref)
 	case events.ItemMoved:
+		_, span := cl.tp.Tracer("clientlog").Start(ctx, "processEvent ItemMoved")
+		defer span.End()
+
 		// we send a dedicated event in case the item was only renamed
 		if isRename(e.OldReference, e.Ref) {
 			fileEv("item-renamed", e.Ref)
@@ -133,33 +154,72 @@ func (cl *ClientlogService) processEvent(event events.Event) {
 			fileEv("item-moved", e.Ref)
 		}
 	case events.FileLocked:
+		_, span := cl.tp.Tracer("clientlog").Start(ctx, "processEvent FileLocked")
+		defer span.End()
+
 		fileEv("file-locked", e.Ref)
 	case events.FileUnlocked:
+		_, span := cl.tp.Tracer("clientlog").Start(ctx, "processEvent FileUnlocked")
+		defer span.End()
+
 		fileEv("file-unlocked", e.Ref)
 	case events.FileTouched:
+		_, span := cl.tp.Tracer("clientlog").Start(ctx, "processEvent FileTouched")
+		defer span.End()
+
 		fileEv("file-touched", e.Ref)
 	case events.SpaceShared:
+		_, span := cl.tp.Tracer("clientlog").Start(ctx, "processEvent SpaceShared")
+		defer span.End()
+
 		r, _ := storagespace.ParseReference(e.ID.GetOpaqueId())
 		shareEv("space-member-added", &r, e.GranteeUserID, e.GranteeGroupID)
 	case events.SpaceShareUpdated:
+		_, span := cl.tp.Tracer("clientlog").Start(ctx, "processEvent SpaceShareUpdated")
+		defer span.End()
+
 		r, _ := storagespace.ParseReference(e.ID.GetOpaqueId())
 		shareEv("space-share-updated", &r, e.GranteeUserID, e.GranteeGroupID)
 	case events.SpaceUnshared:
+		_, span := cl.tp.Tracer("clientlog").Start(ctx, "processEvent SpaceUnshared")
+		defer span.End()
+
 		r, _ := storagespace.ParseReference(e.ID.GetOpaqueId())
 		shareEv("space-member-removed", &r, e.GranteeUserID, e.GranteeGroupID)
 	case events.ShareCreated:
+		_, span := cl.tp.Tracer("clientlog").Start(ctx, "processEvent ShareCreated")
+		defer span.End()
+
 		shareEv("share-created", &provider.Reference{ResourceId: e.ItemID}, e.GranteeUserID, e.GranteeGroupID)
 	case events.ShareUpdated:
+		_, span := cl.tp.Tracer("clientlog").Start(ctx, "processEvent ShareUpdated")
+		defer span.End()
+
 		shareEv("share-updated", &provider.Reference{ResourceId: e.ItemID}, e.GranteeUserID, e.GranteeGroupID)
 	case events.ShareRemoved:
+		_, span := cl.tp.Tracer("clientlog").Start(ctx, "processEvent ShareRemoved")
+		defer span.End()
+
 		shareEv("share-removed", &provider.Reference{ResourceId: e.ItemID}, e.GranteeUserID, e.GranteeGroupID)
 	case events.LinkCreated:
+		_, span := cl.tp.Tracer("clientlog").Start(ctx, "processEvent LinkCreated")
+		defer span.End()
+
 		fileEv("link-created", &provider.Reference{ResourceId: e.ItemID})
 	case events.LinkUpdated:
+		_, span := cl.tp.Tracer("clientlog").Start(ctx, "processEvent LinkUpdated")
+		defer span.End()
+
 		fileEv("link-updated", &provider.Reference{ResourceId: e.ItemID})
 	case events.LinkRemoved:
+		_, span := cl.tp.Tracer("clientlog").Start(ctx, "processEvent LinkRemoved")
+		defer span.End()
+
 		fileEv("link-removed", &provider.Reference{ResourceId: e.ItemID})
 	case events.BackchannelLogout:
+		_, span := cl.tp.Tracer("clientlog").Start(ctx, "processEvent BackchannelLogout")
+		defer span.End()
+
 		evType, users, data = backchannelLogoutEvent(e)
 	}
 
