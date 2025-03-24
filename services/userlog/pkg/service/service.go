@@ -10,6 +10,7 @@ import (
 
 	gateway "github.com/cs3org/go-cs3apis/cs3/gateway/v1beta1"
 	user "github.com/cs3org/go-cs3apis/cs3/identity/user/v1beta1"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/go-chi/chi/v5"
 	"github.com/owncloud/reva/v2/pkg/events"
 	"github.com/owncloud/reva/v2/pkg/rgrpc/todo/pool"
@@ -219,6 +220,17 @@ func (ul *UserlogService) processEvent(event events.Event) {
 		defer span.End()
 
 		users, err = utils.ResolveID(ctx, e.GranteeUserID, e.GranteeGroupID, gwc)
+
+	case events.OCMCoreShareCreated:
+		_, span := ul.tp.Tracer("userlog").Start(ctx, "processEvent OCMCoreShareCreated")
+		defer span.End()
+		fmt.Println("###\n userlog OCMCoreShareCreated \n ###")
+		spew.Dump(e)
+
+		// TODO: implement the OCMCoreShareCreated event
+		// evType = "ocm-share-created"
+		// executant = e.Executant
+		// users, err = utils.ResolveID(ctx, e.GranteeUserID, e.GranteeGroupID, gwc)
 	}
 
 	if err != nil {

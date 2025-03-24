@@ -13,6 +13,7 @@ import (
 	user "github.com/cs3org/go-cs3apis/cs3/identity/user/v1beta1"
 	rpc "github.com/cs3org/go-cs3apis/cs3/rpc/v1beta1"
 	provider "github.com/cs3org/go-cs3apis/cs3/storage/provider/v1beta1"
+	"github.com/davecgh/go-spew/spew"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/owncloud/reva/v2/pkg/events"
@@ -225,6 +226,8 @@ func (cl *ClientlogService) processEvent(event events.Event) {
 	case events.OCMCoreShareCreated:
 		_, span := cl.tp.Tracer("clientlog").Start(ctx, "processEvent OCMCoreShareCreated")
 		defer span.End()
+		fmt.Println("###\n clientlog OCMCoreShareCreated \n ###")
+		spew.Dump(e)
 
 		// TODO: implement the OCMCoreShareCreated event
 		// TODO: How is the event used? So the useful fields are filled
@@ -234,11 +237,18 @@ func (cl *ClientlogService) processEvent(event events.Event) {
 			AffectedUserIDs: []string{e.GranteeUserID.GetOpaqueId()},
 		}
 		evType = "ocm-share-created"
+
 	case events.OCMCoreShareDelete:
+		_, span := cl.tp.Tracer("clientlog").Start(ctx, "processEvent OCMCoreShareDelete")
+		defer span.End()
+		fmt.Println("###\n clientlog OCMCoreShareDelete \n ###")
 
 		// TODO: implement the OCMCoreShareDelete event
 		evType = "ocm-share-delete"
 	}
+
+	fmt.Println("###\n clientlog processEvent \n ###", evType)
+	spew.Dump(data)
 
 	if err != nil {
 		cl.log.Error().Err(err).Interface("event", event).Msg("error gathering members for event")
