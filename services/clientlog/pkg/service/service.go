@@ -227,7 +227,17 @@ func (cl *ClientlogService) processEvent(event events.Event) {
 		defer span.End()
 
 		// TODO: implement the OCMCoreShareCreated event
+		// TODO: How is the event used? So the useful fields are filled
+		users = []string{e.GranteeUserID.GetOpaqueId()}
+		data = FileEvent{
+			ItemID:          e.ItemID,
+			AffectedUserIDs: []string{e.GranteeUserID.GetOpaqueId()},
+		}
 		evType = "ocm-share-created"
+	case events.OCMCoreShareDelete:
+
+		// TODO: implement the OCMCoreShareDelete event
+		evType = "ocm-share-delete"
 	}
 
 	if err != nil {

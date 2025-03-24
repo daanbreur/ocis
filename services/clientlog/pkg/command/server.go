@@ -43,6 +43,7 @@ var _registeredEvents = []events.Unmarshaller{
 	events.LinkRemoved{},
 	events.BackchannelLogout{},
 	events.OCMCoreShareCreated{},
+	events.OCMCoreShareDelete{},
 }
 
 // Server is the entrypoint for the server command.
