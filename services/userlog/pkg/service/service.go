@@ -2,10 +2,12 @@ package service
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	gateway "github.com/cs3org/go-cs3apis/cs3/gateway/v1beta1"
@@ -111,6 +113,7 @@ func (ul *UserlogService) MemorizeEvents(ch <-chan events.Event) {
 func (ul *UserlogService) processEvent(event events.Event) {
 
 	fmt.Printf("###\n\n userlog processEvent: event type: %T \n\n ###\n", event.Event)
+	spew.Dump(event)
 
 	// for each event we need to:
 	// I) find users eligible to receive the event
@@ -224,15 +227,35 @@ func (ul *UserlogService) processEvent(event events.Event) {
 	case events.OCMCoreShareCreated:
 		_, span := ul.tp.Tracer("userlog").Start(ctx, "processEvent OCMCoreShareCreated")
 		defer span.End()
-		fmt.Println("###\n userlog OCMCoreShareCreated \n ###")
+		executant = e.Executant
+		users = append(users, e.GranteeUserID.GetOpaqueId())
+
+	case events.OCMCoreShareDelete:
+		_, span := ul.tp.Tracer("userlog").Start(ctx, "processEvent OCMCoreShareDelete")
+		defer span.End()
+		fmt.Println("###\n\n userlog processEvent: OCMCoreShareDelete \n\n ###\n")
 		spew.Dump(e)
 
-		// TODO: implement the OCMCoreShareCreated event
-		// evType = "ocm-share-created"
-		// executant = e.Executant
-		// users, err = utils.ResolveID(ctx, e.GranteeUserID, e.GranteeGroupID, gwc)
-	}
+		decoded, err := base64.StdEncoding.DecodeString(e.ExecutantUserID)
+		if err != nil {
+			ul.log.Error().Err(err).Msg("failed to decode ExecutantUserID")
+			return
+		}
 
+		decodedStr := string(decoded)
+		parts := strings.SplitN(decodedStr, "@", 2)
+		if len(parts) != 2 {
+			ul.log.Error().Str("decoded", decodedStr).Msg("invalid ExecutantUserID format")
+			return
+		}
+
+		executant = &user.UserId{
+			OpaqueId: parts[0],
+			Idp:      parts[1],
+			Type:     user.UserType_USER_TYPE_FEDERATED,
+		}
+		users = append(users, e.GranteeUserID)
+	}
 	if err != nil {
 		// TODO: Find out why this errors on ci pipeline
 		ul.log.Debug().Err(err).Interface("event", event).Msg("error gathering members for event")

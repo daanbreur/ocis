@@ -229,22 +229,26 @@ func (cl *ClientlogService) processEvent(event events.Event) {
 		fmt.Println("###\n clientlog OCMCoreShareCreated \n ###")
 		spew.Dump(e)
 
-		// TODO: implement the OCMCoreShareCreated event
-		// TODO: How is the event used? So the useful fields are filled
+		// QUESTION: How is the event used? So the useful fields are filled
+		evType = "ocm-share-created"
 		users = []string{e.GranteeUserID.GetOpaqueId()}
 		data = FileEvent{
 			ItemID:          e.ItemID,
 			AffectedUserIDs: []string{e.GranteeUserID.GetOpaqueId()},
 		}
-		evType = "ocm-share-created"
 
 	case events.OCMCoreShareDelete:
 		_, span := cl.tp.Tracer("clientlog").Start(ctx, "processEvent OCMCoreShareDelete")
 		defer span.End()
 		fmt.Println("###\n clientlog OCMCoreShareDelete \n ###")
 
-		// TODO: implement the OCMCoreShareDelete event
+		// QUESTION: How is the event used? So the useful fields are filled
 		evType = "ocm-share-delete"
+		users = []string{e.GranteeUserID}
+		data = FileEvent{
+			ItemName:        e.ResourceName,
+			AffectedUserIDs: []string{e.GranteeUserID},
+		}
 	}
 
 	fmt.Println("###\n clientlog processEvent \n ###", evType)
