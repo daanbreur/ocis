@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/pprof"
+	"time"
 
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/justinas/alice"
@@ -75,6 +76,7 @@ func NewService(opts ...Option) *http.Server {
 		BaseContext: func(_ net.Listener) context.Context {
 			return baseCtx
 		},
+		ReadHeaderTimeout: 5 * time.Second,
 		Handler: alice.New(
 			chimiddleware.RealIP,
 			chimiddleware.RequestID,

@@ -7,6 +7,7 @@ import (
 	"ociswrapper/log"
 	"ociswrapper/ocis/config"
 	"ociswrapper/wrapper/handlers"
+	"time"
 )
 
 func Start(port string) {
@@ -17,7 +18,8 @@ func Start(port string) {
 	}
 
 	httpServer := &http.Server{
-		Addr: ":" + port,
+		Addr:              ":" + port,
+		ReadHeaderTimeout: 5 * time.Second,
 	}
 
 	var mux = http.NewServeMux()
